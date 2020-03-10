@@ -13,7 +13,11 @@ import java.util.LinkedList;
 // import java.util.Scanner;
 
 public class ElevatorControl {
-
+	
+	List<Elevator> elevators = new ArrayList<Elevator>();
+	static int numElevators = 0;
+	static int numFloors = 0;
+	
 	public static void main(String[] args) {
 		// input should be the number of elevators and number of floors, on the same line, separated by a space
 		// e.g. the following command line argument specifies 4 elevators and 8 floors:
@@ -21,84 +25,80 @@ public class ElevatorControl {
 		// java ElevatorControl 4 8
 		//
 		
-		int numElevators = Integer.parseInt(args[0]);
-		int numFloors = Integer.parseInt(args[1]);
+		numElevators = Integer.parseInt(args[0]);
+		numFloors = Integer.parseInt(args[1]);
 		
 		System.out.println("numElevators: " + numElevators + "  numFloors: " + numFloors);
 	}
 	
-	public void reportDoorState(int elevatorNumber, boolean isOpen) {
-		// reports a change in Elevator door state
-
+	public void initElevators(int numElevators) {
+		// initialize the Elevators and store in an array list
+		for (int i = 0; i < numElevators; i++) {
+			Elevator elevator = new Elevator(i + 1);
+			this.elevators.add(elevator);
+		}
 	}
 	
-	public void reportFloorState(int elevatorNumber, int floorNumber) {
-		// reports a change in Elevator floor state
-
-	}
-	
-	
-	
-	class Elevator {
-		// encapsulates all the state data related to an instance of Elevator
+	public void handleElevatorRequest(int currentFloor, int elevatorNumber) {
+		int minDistance = 0;
 		
-		private int elevatorNumber = 0;
-		private int currentFloor = 0;
-		private int totalFloors = 0;
-		private int totalTrips = 0;
-		private boolean isDoorOpen = false;
-		private boolean isOccupied = false;
-		
-		public int elevatorMove(int requestedFloor) {
-			// close the elevator door
-			this.isDoorOpen = false;
-			
-			// increment the number of trips made by this elevator
-			this.totalTrips++;
-			
-			if (requestedFloor < this.currentFloor) {
-				// need to go down to requested floor				
-				while (this.currentFloor > 1) {
-					
-					this.currentFloor--; 	// go down a floor
-					this.totalFloors++;		// increment count of floors for this elevator
-					
-					// change the floor and report state
-					if (changeFloorState(requestedFloor) == true) {
-						// we arrived at the requested floor
-						break;
-					}
+		// see if any elevators are moving past this floor
+		for (int i = 0; i < numElevators; i++) {
+			if (this.elevators.get(i).getIsMoving() == false &&
+					this.elevators.get(i).getIsOccupied() == false && 
+					this.elevators.get(i).getCurrentFloor() == currentFloor) {
+				// elevator is not moving, unoccupied and on the current floor - open doors
+				this.elevators.get(i).setIsDoorOpen(true);
+			}
+			else if (this.elevators.get(i).getIsMoving() && this.elevators.get(i).getIsOccupied()) {
+				// elevator occupied and moving - see if it will pass this floor
+				if (this.elevators.get(i).getCurrentFloor() < currentFloor && 
+						this.elevators.get(i).getDestinationFloor() > currentFloor) {
+					// elevator going up and will pass this floor - move elevator to this floor
+					this.elevators.get(i).elevatorMove(currentFloor);
 				}
+				else if (this.elevators.get(i).getCurrentFloor() > currentFloor && 
+						this.elevators.get(i).getDestinationFloor() < currentFloor) {
+					// elevator going down and will pass this floor - move elevator to this floor
+					this.elevators.get(i).elevatorMove(currentFloor);
+				}
+				
 			}
 			else {
-				// need to go up to requested floor
-				while (this.currentFloor < totalFloors) {
-					
-					this.currentFloor++; 	// go up a floor
-					this.totalFloors++;		// increment count of floors for this elevator
-					
-					// change the floor and report state
-					if (changeFloorState(requestedFloor) == true) {
-						// we arrived at the requested floor
-						break;
+				// find closest unoccupied elevator	
+				for (int x = elevatorNumber; x < numElevators; x++) {
+					if (this.elevators.get(x).getIsOccupied() == false) {
+						int diff = Math.abs(this.elevators.get(x).getCurrentFloor() - currentFloor);
+						
+						if (diff < minDistance) {
+							// this elevator is closer
+							minDistance = diff;
+							elevatorNumber = this.elevators.get(x).getNumber();
+						}
 					}
+					// move the unoccuppied elevator to current floor
+					this.elevators.get(elevatorNumber).elevatorMove(currentFloor);
 				}
 			}
-			
-			return currentFloor;
-		}
-		
-		private boolean changeFloorState(int requestedFloor) {
-			// handles a change in Elevator floor state			
-			reportFloorState(this.elevatorNumber, this.currentFloor); // report floor change for this elevator
-			
-			if (this.currentFloor == requestedFloor) {
-				// we have arrived - open doors
-				this.isDoorOpen = true;
-				reportDoorState(this.elevatorNumber, true);
-				return true;
-			}
-			return false;
 		}
 	}
+	
+	public static void reportDoorState(int elevatorNumber, boolean isOpen) {
+		// reports a change in Elevator door state
+		if (isOpen) {
+			System.out.printf("Elevator #%d door is open", elevatorNumber);
+		}
+		else {
+			System.out.printf("Elevator #%d door is closed", elevatorNumber);
+		}
+	}
+	
+	public static void reportFloorState(int elevatorNumber, int floorNumber) {
+		// reports a change in Elevator floor state
+		System.out.printf("Elevator #%d just passed floor #%d", elevatorNumber, floorNumber);
+	}
+	
+	
+	
+
 }
