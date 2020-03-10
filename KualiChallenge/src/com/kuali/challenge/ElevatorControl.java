@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -14,94 +15,90 @@ import java.util.LinkedList;
 public class ElevatorControl {
 
 	public static void main(String[] args) {
-		int numFeatures = 5;
-		int topFeatures = 2;
-		List<String> possibleFeatures = new ArrayList();
-		int numFeatureRequests = 3;
-		List<String> featureRequests = new ArrayList();	
+		// input should be the number of elevators and number of floors, on the same line, separated by a space
+		// e.g. the following command line argument specifies 4 elevators and 8 floors:
+		//
+		// java ElevatorControl 4 8
+		//
 		
-		possibleFeatures.add("aaa");
-		possibleFeatures.add("bbb");
-		possibleFeatures.add("ccc");
-		possibleFeatures.add("ddd");
-		possibleFeatures.add("eee");
+		int numElevators = Integer.parseInt(args[0]);
+		int numFloors = Integer.parseInt(args[1]);
 		
-		featureRequests.add("Best services provided by aaa");
-		featureRequests.add("bbb has great services");
-		featureRequests.add("aaa provides better services than all other");
-        
-		ArrayList<String> result = popularNFeatures(numFeatures, topFeatures, possibleFeatures, numFeatureRequests, featureRequests);
-		
-		
-		
-		
-		
-//		Scanner scan = new Scanner(System.in);
-//		int i = scan.nextInt();
-//		double d = scan.nextDouble();
-//		String s = scan.nextLine();
-//		s = scan.nextLine();
-//
-//		System.out.println("String: " + s);
-//		System.out.println("Double: " + d);
-//		System.out.println("Int: " + i);
-		
-//		for(int i = 0; i < args.length; i++) 
-//		{
-//	         System.out.println("args[" + i + "]: " + args[i]);
-//		}
-//		
-//		
-//		args[0] = args[0].replace("[", "");
-//		args[0] = args[0].replace("]", "");
-//		String[] arr = args[0].split(",");
-//		String num = args[1];
-//		
-//		System.out.println("hello world");
+		System.out.println("numElevators: " + numElevators + "  numFloors: " + numFloors);
 	}
 	
-	public static ArrayList<String> popularNFeatures(int numFeatures, int topFeatures, List<String> possibleFeatures, int numFeatureRequests, List<String> featureRequests)
-	{
-		HashMap<String, Integer> featuresMap = new HashMap<String, Integer>();
+	public void reportDoorState(int elevatorNumber, boolean isOpen) {
+		// reports a change in Elevator door state
+
+	}
+	
+	public void reportFloorState(int elevatorNumber, int floorNumber) {
+		// reports a change in Elevator floor state
+
+	}
+	
+	
+	
+	class Elevator {
+		// encapsulates all the state data related to an instance of Elevator
 		
-		// load hashmap with the possible features as keys
-		for (int i = 0; i < numFeatures; i++) {
-			featuresMap.put(possibleFeatures.get(i), 0);
-		}
+		private int elevatorNumber = 0;
+		private int currentFloor = 0;
+		private int totalFloors = 0;
+		private int totalTrips = 0;
+		private boolean isDoorOpen = false;
+		private boolean isOccupied = false;
 		
-		// loop through feature requests and update count of features in hashmap
-		for (String request: featureRequests){
-			// see if feature request contains possible features
-			for ( String key : featuresMap.keySet() ) {
-				if (request.indexOf(key) != -1)
-				{
-					// increment feature count
-					featuresMap.put(key, featuresMap.get(key) + 1);
+		public int elevatorMove(int requestedFloor) {
+			// close the elevator door
+			this.isDoorOpen = false;
+			
+			// increment the number of trips made by this elevator
+			this.totalTrips++;
+			
+			if (requestedFloor < this.currentFloor) {
+				// need to go down to requested floor				
+				while (this.currentFloor > 1) {
+					
+					this.currentFloor--; 	// go down a floor
+					this.totalFloors++;		// increment count of floors for this elevator
+					
+					// change the floor and report state
+					if (changeFloorState(requestedFloor) == true) {
+						// we arrived at the requested floor
+						break;
+					}
 				}
 			}
+			else {
+				// need to go up to requested floor
+				while (this.currentFloor < totalFloors) {
+					
+					this.currentFloor++; 	// go up a floor
+					this.totalFloors++;		// increment count of floors for this elevator
+					
+					// change the floor and report state
+					if (changeFloorState(requestedFloor) == true) {
+						// we arrived at the requested floor
+						break;
+					}
+				}
+			}
+			
+			return currentFloor;
 		}
 		
-		// Create a list from elements of HashMap 
-        LinkedList<Entry<String, Integer>> featureList = 
-               new LinkedList<Map.Entry<String, Integer> >(featuresMap.entrySet()); 
-  
-        // Sort the list 
-        Collections.sort(featureList, new Comparator<Map.Entry<String, Integer> >() { 
-            public int compare(Map.Entry<String, Integer> o1,  
-                               Map.Entry<String, Integer> o2) 
-            { 
-                return (o1.getValue()).compareTo(o2.getValue()); 
-            } 
-        }); 
-		
-        ArrayList<String> resultList = new ArrayList();
-        int count = 0;
-        for (int x = featureList.size() - 1; count < topFeatures; x--) {
-        	resultList.add(featureList.get(x).getKey());
-        	count++;
-        }
-		return resultList;
+		private boolean changeFloorState(int requestedFloor) {
+			// handles a change in Elevator floor state			
+			reportFloorState(this.elevatorNumber, this.currentFloor); // report floor change for this elevator
+			
+			if (this.currentFloor == requestedFloor) {
+				// we have arrived - open doors
+				this.isDoorOpen = true;
+				reportDoorState(this.elevatorNumber, true);
+				return true;
+			}
+			return false;
+		}
 	}
-	
-	
 }
